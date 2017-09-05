@@ -20,7 +20,7 @@ html(lang="ja")
             input(class="form-control" type="text" name="title" placeholder="タイトル")
           div(class="col-md-1") タグ 
           div(class="col-md-4")
-            select(class="form-control")
+            select(class="form-control" name="tag")
               each val in tags
                 option(value=val.id) #{val.name}
         div(class="row")
