@@ -9,6 +9,16 @@ const DB_USER = process.env['PHH_DB_USER'] || 'root';
 const DB_PASSWD = process.env['PHH_DB_PASSWD'] || '';
 
 const server = http.createServer ((req, res) => {
+  if (req.method == 'GET' && req.url == '/bootstrap.css') {
+    res.writeHead (200, {
+      'Content-Type': 'text/css; charset=utf-8'
+    });
+    const fs = require('fs');
+    const rs = fs.createReadStream('./bootstrap.css');
+    rs.pipe(res);
+    return;
+  }
+
   res.writeHead (200, {
     'Content-Type': 'text/html; charset=utf-8'
   });
