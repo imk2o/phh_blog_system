@@ -35,11 +35,10 @@ html(lang="ja")
                 div 更新日時：#{entry.updated_at}
                 div= entry.text
                 div(class="btn-group" role="group")
-                  form(method="post" action="/entry/edit")
-                    //- ハリボテ
+                  form(method="get" action="/entry/edit")
+                    input(type="hidden" name="id" value=entry.id)
                     input(class="btn btn-warning btn-sm" type="submit" value="編集")
-                  form(method="post" action="/entry/delete")
-                    //- ハリボテ
+                  form(method="post" action="/entry/delete?id=" + entry.id)
                     input(class="btn btn-danger btn-sm" type="submit" value="削除")
 
           // ページネーション

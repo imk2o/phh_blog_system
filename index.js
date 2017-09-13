@@ -23,9 +23,12 @@ const server = http.createServer ((req, res) => {
     'Content-Type': 'text/html; charset=utf-8'
   });
 
+  // パス部分を抽出
+  let url = require('url').parse(req.url);
+
   switch (req.method) {
   case 'GET':
-    switch (req.url) {
+    switch (url.pathname) {
     case '/':
       showTopPage (req, res);
       break;
@@ -35,15 +38,24 @@ const server = http.createServer ((req, res) => {
     case '/entry/post':
       showPostPage (req, res);
       break;
+    case '/entry/edit':
+      editEntry (req, res);
+      break;
     default:
       res.end ();
       break;
     }
     break;
   case 'POST':
-    switch (req.url) {
+    switch (url.pathname) {
     case '/entry/post/add':
       postNewEntry (req, res);
+      break;
+    case '/entry/delete':
+      deleteEntry (req, res);
+      break;
+    case '/entry/edit':
+      updateEntry (req, res);
       break;
     default:
       res.end ();
@@ -153,6 +165,138 @@ function showPostPage (req, res) {
 
 // 新規投稿をする
 function postNewEntry (req, res) {
-  // トップページに戻る
-  showTopPage (req, res);
+  req.on('data', (data) => {
+    // 入力内容を取得
+    const decoded = decodeURIComponent(data);
+    let parsedResult = querystring.parse(decoded);
+
+    // DBに登録する
+    let connection;
+    mysql.createConnection ({
+      host: 'localhost',
+      user: DB_USER,         // 'root'
+      password: DB_PASSWD,   // ''
+      database: DB_NAME,
+    }).then ((conn) => {
+      connection = conn;
+      return connection.query(
+        'INSERT INTO `entry` (`user_id`, `title`,`tag_id`,`text`) VALUES(?,?,?,?)',
+        [
+          1,
+          parsedResult['title'],
+          parsedResult['tag'],
+          parsedResult['entry']
+        ]
+      );
+    }).then ((result) => {
+      connection.end();
+
+      // トップページに戻る
+      showTopPage (req, res);
+    }).catch ((error) => {
+      console.log(error);
+    });
+  });
+}
+
+// 投稿を編集する
+function editEntry (req, res) {
+  let url = require('url').parse(req.url, true);
+  let entry_id = url.query['id'];
+
+  let connection;
+  let entry;
+  let tags;
+  mysql.createConnection({
+    host: 'localhost',
+    user: DB_USER,
+    password: DB_PASSWD,
+    database: DB_NAME
+  }).then ((conn) => {
+    connection = conn;
+
+    return connection.query (
+      'SELECT * FROM `entry` WHERE id = ?',
+      [entry_id]
+    );
+  }).then ((rows) => {
+    entry = rows[0];
+
+    return connection.query ('SELECT * FROM `tag`');
+  }).then ((rows) => {
+    tags = rows;
+    res.write(pug.renderFile('./includes/edit.pug',
+                             {
+                               entry: entry,
+                               tags: tags,
+                             }));
+    connection.end ();
+    res.end ();
+  }).catch ((error) => {
+    console.log (error);
+  });
+}
+
+// 投稿を更新する
+function updateEntry (req, res) {
+  req.on('data', (data) => {
+    // 入力内容を取得
+    const decoded = decodeURIComponent(data);
+    let parsedResult = querystring.parse(decoded);
+
+    // DBに登録する
+    let connection;
+    mysql.createConnection ({
+      host: 'localhost',
+      user: DB_USER,         // 'root'
+      password: DB_PASSWD,   // ''
+      database: DB_NAME,
+    }).then ((conn) => {
+      connection = conn;
+      return connection.query(
+        'UPDATE `entry` SET `title` = ?, `tag_id` = ?,`text` = ? WHERE id = ?',
+        [
+          parsedResult['title'],
+          parsedResult['tag'],
+          parsedResult['entry'],
+          parsedResult['id']
+        ]
+      );
+    }).then ((result) => {
+      connection.end();
+
+      // トップページに戻る
+      showTopPage (req, res);
+    }).catch ((error) => {
+      console.log(error);
+    });
+  });
+}
+
+// 投稿を削除する
+function deleteEntry (req, res) {
+  let url = require('url').parse(req.url, true);
+  let entry_id = url.query['id'];
+
+  // DBから削除する
+  let connection;
+  mysql.createConnection ({
+    host: 'localhost',
+    user: DB_USER,         // 'root'
+    password: DB_PASSWD,   // ''
+    database: DB_NAME,
+  }).then ((conn) => {
+    connection = conn;
+    return connection.query(
+      'DELETE FROM `entry` WHERE id = ?', 
+      [entry_id]
+    );
+  }).then ((result) => {
+    connection.end();
+
+    // トップページに戻る
+    showTopPage (req, res);
+  }).catch ((error) => {
+    console.log(error);
+  });
 }
