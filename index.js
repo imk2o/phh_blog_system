@@ -31,6 +31,9 @@ const server = http.createServer ((req, res) => {
     case '/entry/edit':
       editEntry (req, res);
       break;
+    case '/tag/add':
+      showNewTagPage(req, res);
+      break;
     default:
       res.end ();
       break;
@@ -46,6 +49,9 @@ const server = http.createServer ((req, res) => {
       break;
     case '/entry/edit':
       updateEntry (req, res);
+      break;
+    case '/tag/add':
+      createTag (req, res);
       break;
     default:
       res.end ();
@@ -295,5 +301,44 @@ function deleteEntry (req, res) {
     showTopPage (req, res);
   }).catch ((error) => {
     console.log(error);
+  });
+}
+
+// タグの追加ページを表示する
+function showNewTagPage (req, res) {
+  res.write(pug.renderFile('./includes/edit_tag.pug'));
+  res.end ();
+}
+
+// タグを追加する
+function createTag (req, res) {
+  req.on('data', (data) => {
+    // 入力内容を取得
+    const decoded = decodeURIComponent(data);
+    let parsedResult = querystring.parse(decoded);
+
+    // DBに登録する
+    let connection;
+    mysql.createConnection ({
+      host: 'localhost',
+      user: DB_USER,         // 'root'
+      password: DB_PASSWD,   // ''
+      database: DB_NAME,
+    }).then ((conn) => {
+      connection = conn;
+      return connection.query(
+        'INSERT INTO `tag` (`name`) VALUES(?)',
+        [
+          parsedResult['name']
+        ]
+      );
+    }).then ((result) => {
+      connection.end();
+
+      // トップページに戻る
+      showTopPage (req, res);
+    }).catch ((error) => {
+      console.log(error);
+    });
   });
 }
