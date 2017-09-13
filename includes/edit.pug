@@ -1,0 +1,36 @@
+//- 記事編集用のテンプレート (TODO: post.pugと統合)
+
+doctype html
+html(lang="ja")
+  head
+    meta(charset="UTF-8")
+    link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css", integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M", crossorigin="anonymous")
+    style
+      include css/style.css
+    title 記事投稿
+  body
+    //- include に関しては次のドキュメントを参照のこと
+    //- https://pugjs.org/language/includes.html
+    include header.pug
+
+    div(class="container")
+      h1 投稿
+      form(class="form-group" action="/entry/edit" method="post")
+        input(type="hidden" name="id" value=entry.id)
+        div(class="row")
+          div(class="col-md-7")
+            input(class="form-control" type="text" name="title" placeholder="タイトル" value=entry.title)
+          div(class="col-md-1") タグ 
+          div(class="col-md-4")
+            select(class="form-control" name="tag")
+              each val in tags
+                if entry.tag_id === val.id
+                  option(value=val.id selected) #{val.name}
+                else
+                  option(value=val.id) #{val.name}
+        div(class="row")
+          div(class="col")
+            textarea(class="form-control" name="entry" placeholder="記事" rows="8") #{entry.text}
+        div(class="row")
+          div(class="col")
+            input(class="btn btn-primary" type="submit" value="投稿")
