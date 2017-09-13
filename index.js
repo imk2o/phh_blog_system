@@ -70,9 +70,12 @@ server.listen (port, () => {
 
 // トップページを表示する
 function showTopPage (req, res) {
+  let url = require('url').parse(req.url, true);
+  let tag_id = url.query['id'];
+  
   let connection;
   let entries;
-  let tags = []
+  let tags = [];
 
   mysql.createConnection({
     host: 'localhost',
@@ -81,7 +84,11 @@ function showTopPage (req, res) {
     database: DB_NAME
   }).then ((conn) => {
     connection = conn;
-    return connection.query ("SELECT * FROM entry");
+    if (tag_id) {
+      return connection.query ("SELECT * FROM entry WHERE tag_id = ?", [tag_id]);
+    } else {
+      return connection.query ("SELECT * FROM entry");
+    }
   }).then ((rows) => {
     entries = rows;
     return connection.query ('SELECT * FROM tag');
